@@ -18,17 +18,5 @@ def get_ticker_info(ticker_symbol):
     except:
         print("Something when wrong")
         
-def download_ticker_prices(ticker_symbol,start_date,end_date=default_end_date):
-    try:
-        ticker=yf.Ticker(ticker_symbol)
-        info=ticker.info
-        if info != None:
-            data=yf.download(ticker_symbol,start_date,end_date)
-            return data
-        else:
-            return None
-    except:
-        print("Something when wrong")
-        
 #bris=download_ticker_prices('BRIS.JK','2000-01-01')
 #print(bris)
