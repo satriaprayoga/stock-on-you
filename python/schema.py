@@ -33,7 +33,7 @@ def create_stock_tables(engine,stock_list,start_date,end_date):
             print("get data for {} ",s)
             data.reset_index()
             #print("get data for {} ",data)
-            data.to_sql(s,engine)
+            data.to_sql(s.lower(),engine)
         except:
             print(f"Cannot get info of {s}, it probably does not exist")
             continue
@@ -58,17 +58,37 @@ def get_price(engine,table_name,index):
 
 def MACD(df):
     df['MACD_diff']=ta.trend.macd_diff(df.Close)
-    df['Suggestions']=np.where((df.MACD_diff > 0) & (df.MACD_diff.shift(1) < 0),True,False)
+    df['Decision MACD']=np.where((df.MACD_diff > 0) & (df.MACD_diff.shift(1) < 0),True,False)
     return df
+
+def Goldencross(df):
+    df['SMA20']=ta.trend.sma_indicator(df.Close, window=9)
+    df['SMA50']=ta.trend.sma_indicator(df.Close, window=12)
+    df['Signal']=np.where(df['SMA20']>df['SMA50'],True,False)
+    df['Decision GC']=df.Signal.diff()
+    return df
+
+def RSI_SMA(df):
+    df['RSI']=ta.momentum.rsi(df.Close,window=9)
+    df['SMA200']=ta.trend.sma_indicator(df.Close,window=26)
+    df['Decision RSI_SMA']=np.where((df.Close > df.SMA200) & (df.RSI < 30),True,False)
+    return df
+
+def apply(engine,stock_name,index):
+    price=get_price(engine,stock_name,index)
+    recommend=MACD(price)
+    recommend=Goldencross(price)
+    recommend=RSI_SMA(price)
+    return recommend
+
     
 
-engine=sqlalchemy.create_engine('mysql://root:asdqwe123@localhost:3306')
+engine=sqlalchemy.create_engine('mysql://root:asdqwe123@localhost:3306/')
 #idx=ticker.get_tickers_from_wiki()
-#create_stock_tables(engine,idx,'2012-01-01',default_end_date)
+#create_stock_tables(engine,idx,'2017-01-01',default_end_date)
 #engine.close()
 idx=get_tables_name(engine,'idx')
 print(idx)
 
-bris=get_price(engine,'bris','idx')
-bris=MACD(bris)
+bris=apply(engine,'btps','idx')
 print(bris)
