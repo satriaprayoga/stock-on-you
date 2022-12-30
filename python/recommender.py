@@ -4,7 +4,7 @@ import numpy as np
 
 class Recomender:
     
-    def __init__(self,engine,index="idx") -> None:
+    def __init__(self,engine,index="idx"):
         self.index = index
         self.engine= engine
         
@@ -16,7 +16,7 @@ class Recomender:
     
     def get_prices(self):
         prices=[]
-        for table, schema in zip(self.get_tables_name().TABLE_NAME, self.get_tables_name().Schema):
+        for table, schema in zip(self.get_tables_name().table_name, self.get_tables_name().Schema):
             sql = schema+'.'+f'`{table}`'
             prices.append(pd.read_sql(f"SELECT * FROM {sql}",self.engine))
         return prices
@@ -41,3 +41,31 @@ class Recomender:
         df['RSI']=ta.momentum.rsi(df.Close,window=10)
         df['SMA200']=ta.trend.sma_indicator(df.Close,window=200)
         df['Decision RSI/SMA']=np.where((df.Close > df.SMA200) & (df.RSI < 30),True,False)
+
+    def applytechnicals(self):
+        prices=self.get_prices()
+        for frame in prices:
+            self.MACD(frame)
+            self.Goldencross(frame)
+            self.RSI_SMA(frame)
+        return prices
+
+    def recommend(self):
+        indicators=['Decision MACD','Decision GC','Decision RSI/SMA']
+        for symbol,frame in zip(self.get_tables_name().table_name,self.applytechnicals()):
+            if frame.empty is False:
+                for indicator in indicators:
+                    
+                    if frame[indicator].iloc[-1]==True:
+                        print(f"{indicator} Buying Signal for "+symbol)
+
+
+import sqlalchemy
+import pymysql
+
+pymysql.install_as_MySQLdb()
+
+engine=sqlalchemy.create_engine('mysql://root:asdqwe123@localhost:3306/')
+idx=Recomender(engine=engine)
+idx_recommends=idx.recommend()
+print(idx_recommends)                
