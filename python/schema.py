@@ -59,36 +59,55 @@ def get_price(engine,table_name,index):
 def MACD(df):
     df['MACD_diff']=ta.trend.macd_diff(df.Close)
     df['Decision MACD']=np.where((df.MACD_diff > 0) & (df.MACD_diff.shift(1) < 0),True,False)
-    return df
+   
 
 def Goldencross(df):
-    df['SMA20']=ta.trend.sma_indicator(df.Close, window=9)
-    df['SMA50']=ta.trend.sma_indicator(df.Close, window=12)
+    df['SMA20']=ta.trend.sma_indicator(df.Close, window=20)
+    df['SMA50']=ta.trend.sma_indicator(df.Close, window=50)
     df['Signal']=np.where(df['SMA20']>df['SMA50'],True,False)
     df['Decision GC']=df.Signal.diff()
-    return df
+
 
 def RSI_SMA(df):
-    df['RSI']=ta.momentum.rsi(df.Close,window=9)
-    df['SMA200']=ta.trend.sma_indicator(df.Close,window=26)
-    df['Decision RSI_SMA']=np.where((df.Close > df.SMA200) & (df.RSI < 30),True,False)
-    return df
+    df['RSI']=ta.momentum.rsi(df.Close,window=10)
+    df['SMA200']=ta.trend.sma_indicator(df.Close,window=200)
+    df['Decision RSI/SMA']=np.where((df.Close > df.SMA200) & (df.RSI < 30),True,False)
+
 
 def apply(engine,stock_name,index):
     price=get_price(engine,stock_name,index)
-    recommend=MACD(price)
-    recommend=Goldencross(price)
-    recommend=RSI_SMA(price)
-    return recommend
+    MACD(price)
+    Goldencross(price)
+    RSI_SMA(price)
+    return price
+    
+def applytechnicals(engine, which):
+    prices=get_prices(engine,which)
+    for frame in prices:
+        MACD(frame)
+        Goldencross(frame)
+        RSI_SMA(frame)
+    return prices
+
+def recommender(engine,which):
+    indicators=['Decision MACD','Decision GC','Decision RSI/SMA']
+    for symbol,frame in zip(which.TABLE_NAME,applytechnicals(engine,which)):
+        if frame.empty is False:
+            for indicator in indicators:
+                if frame[indicator].iloc[-1]==True:
+                    print(f"{indicator} Buying Signal for "+symbol)
+                
 
     
-
 engine=sqlalchemy.create_engine('mysql://root:asdqwe123@localhost:3306/')
 #idx=ticker.get_tickers_from_wiki()
 #create_stock_tables(engine,idx,'2017-01-01',default_end_date)
 #engine.close()
-idx=get_tables_name(engine,'idx')
-print(idx)
+#idx=get_tables_name(engine,'idx')
+#print(idx)
 
-bris=apply(engine,'btps','idx')
-print(bris)
+#bris=apply(engine,'btps','idx')
+#print(bris)
+idx=get_tables_name(engine,"idx")
+recommender(engine,idx)
+print(recommender)
