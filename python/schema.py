@@ -51,6 +51,7 @@ def get_prices(engine,which):
         sql = schema+'.'+f'`{table}`'
         prices.append(pd.read_sql(f"SELECT * FROM {sql}",engine))
     return prices
+
     
 def get_price(engine,table_name,index):
     sql=f"SELECT * FROM {index}.{table_name}"

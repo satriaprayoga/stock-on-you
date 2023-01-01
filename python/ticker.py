@@ -17,6 +17,7 @@ def get_ticker_info(ticker_symbol):
         return ticker.get_info()
     except:
         print("Something when wrong")
-        
-#bris=download_ticker_prices('BRIS.JK','2000-01-01')
-#print(bris)
+
+symbol='bris'.upper()+'.JK' 
+bris=yf.download(symbol,start='2022-12-29')
+print(bris)

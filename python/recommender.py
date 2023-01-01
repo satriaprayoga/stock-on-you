@@ -1,6 +1,7 @@
 import pandas as pd
 import ta
 import numpy as np
+import yfinance as yf
 
 class Recomender:
     
@@ -24,6 +25,28 @@ class Recomender:
     def get_price(self,table_name):
         sql=f"SELECT * FROM {self.index}.{table_name}"
         return pd.read_sql(sql,self.engine)
+
+    def maxdate(self):
+        req = self.index+'.'+f'`{self.get_tables_name().table_name[0]}`'
+        return pd.read_sql(f"SELECT MAX(Date) FROM {req}",self.engine)
+
+    def updateDB(self):
+        maxdate = self.maxdate()['MAX(Date)']
+        maxdate['date']=pd.to_datetime(maxdate).dt.date
+        engine = sqlalchemy.create_engine('mysql://root:asdqwe123@localhost:3306/'+self.index)
+        for symbol in self.get_tables_name().table_name:
+            try:
+                
+                s=symbol.upper()+".JK"
+                print(f"get data for {s} maxdate : {maxdate['date'][0]} ")
+                data = yf.download(s, start=maxdate['date'][0])
+                data = data[data.index > maxdate[0]]
+                data.reset_index()
+                data.to_sql(symbol,engine, if_exists='append')
+                print(data)
+            except:
+                print(f"Cannot get info of {symbol}, it probably does not exist")
+                continue
     
     def MACD(self,df):
         df['MACD_diff']=ta.trend.macd_diff(df.Close)
@@ -67,5 +90,5 @@ pymysql.install_as_MySQLdb()
 
 engine=sqlalchemy.create_engine('mysql://root:asdqwe123@localhost:3306/')
 idx=Recomender(engine=engine)
-idx_recommends=idx.recommend()
-print(idx_recommends)                
+idx.recommend()
+    
