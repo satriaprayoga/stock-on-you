@@ -3,6 +3,9 @@ import ta
 import numpy as np
 import yfinance as yf
 
+from technical.magoldencross import MAGoldenCross
+
+
 class Recomender:
     
     def __init__(self,engine,index="idx"):
