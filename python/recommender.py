@@ -3,7 +3,7 @@ import ta
 import numpy as np
 import yfinance as yf
 
-from technical.magoldencross import MAGoldenCross
+from technical.macrossover import MAGoldenCross
 
 
 class Recomender:
